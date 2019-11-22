@@ -68,14 +68,51 @@ def testing_pss(test_file:TextIO, common_words_file:TextIO ,kss: Dict[str, List[
     common_words_file = common_words_file.read().splitlines()
     review_scores = []
     absolute_errors = []
-    # neutral_words = []
     kss_sharpened = {}
     test_reviews = test_file.readlines()
     
-    for word, value in kss.items():
-        if word not in common_words_file:
-            kss_sharpened[word] = value
-
+    ### remove all common words
+    # for word, value in kss.items():
+    #     if word not in common_words_file:
+    #         kss_sharpened[word] = value
+    
+    ### Remove all words that appears 20 times more
+    # for word, value in kss.items():
+    #     if not value[1] > 20:
+    #         kss_sharpened[word] = value
+    
+    ### Remove all neutral words in common words list
+    # neutral_words = []
+    # for word in common_words_file:
+    #     if word_kss(word, kss) != None:
+    #         if judge(word_kss(word, kss)) != "neutral":
+    #             neutral_words.append(word)
+    # for word, value in kss.items():
+    #     if word not in neutral_words:
+    #         kss_sharpened[word] = value
+    
+    ### Add more weights to not neutral words
+    for word, values in kss.items():
+        if word_kss(word, kss) != None:
+            kss_sharpened[word] = values
+    for word, value in kss_sharpened.items():
+        if judge(word_kss(word, kss))!="neutral":
+            kss_sharpened[word] = [(value[0]*1.2),value[1]]
+    
+    ### Add more weights to not neutral words without neutral words
+    # not_neutral_words = []
+    # for word in common_words_file:
+    #     if word_kss(word, kss) != None:
+    #         if judge(word_kss(word, kss)) != "neutral":
+    #             not_neutral_words.append(word)
+    # for word, value in kss.items():
+    #     if word not in not_neutral_words:
+    #         kss_sharpened[word] = [value[0]*1.5,value[1]]
+            
+    
+    
+    
+                
     for review in test_reviews:
         statement = review[1:].strip()
         predicted_rating = statement_pss(review, kss)
@@ -84,21 +121,26 @@ def testing_pss(test_file:TextIO, common_words_file:TextIO ,kss: Dict[str, List[
 
 
         if predicted_rating != None:
+            
             is_close_val = math.isclose(predicted_rating, original_rating, abs_tol=0.05)
             absolute_error = round((abs(float(predicted_rating) - original_rating)), 2)
             absolute_errors.append(absolute_error)
             mean_absolute_error = round(sum(absolute_errors)/len(absolute_errors), 5)
             review_scores.append([statement, round(predicted_rating, 2), round(predicted_rating), original_rating, absolute_error, is_close_val])
-       
-        absolute_errors_sharpened = []
+    
+    absolute_errors_sharpened = []
+    for review in test_reviews:
+        predicted_rating_sharpened = statement_pss(review, kss_sharpened)
+        original_rating = float(review[0])
         if predicted_rating_sharpened != None:
             absolute_error_sharpened = round((abs(float(predicted_rating_sharpened) - original_rating)), 2)
             absolute_errors_sharpened.append(absolute_error_sharpened)
             mean_absolute_error_sharpened = round(sum(absolute_errors_sharpened)/len(absolute_errors_sharpened), 5)
-
-    print(name_datasets + " org rate: \t", mean_absolute_error)
-    print(name_datasets + " new rate: \t", mean_absolute_error_sharpened)
-    
+            
+    if predicted_rating_sharpened != None:
+        print(name_datasets + " org rate: \t", mean_absolute_error)
+        print(name_datasets + " new rate: \t", mean_absolute_error_sharpened)
+        
     with open('reviews_'+ name_datasets + '.csv', mode ='w') as comparison_file:
         comparison_writer = csv.writer(comparison_file, delimiter=",", quotechar='"', quoting = csv.QUOTE_MINIMAL)
         comparison_writer.writerow(["Mean Absolute Error(MAE): " + str(mean_absolute_error) ])
