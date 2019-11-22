@@ -58,7 +58,7 @@ def partition_dataset(file:TextIO, file_name:str, test_size:float) -> Dict:
     return {'test':test_file_name, 'training':training_file_name}
  
 
-def testing_pss(test_file:TextIO, common_words_file:TextIO ,kss: Dict[str, List[int]], name_datasets) -> Dict:
+def testing_pss(test_file:TextIO, kss: Dict[str, List[int]], name_datasets) -> Dict:
     """Create a csv dataset with the comparison of the scores given by the kss model and the original ones. Print the message "The file: reviews_comparison.csv was created" and return the dictionary {'file':'reviews_comparison.csv'}
     >>> testing_result = testing_pss(open('full.txt', 'r'), kss)
     The file: reviews_comparison.csv was created
@@ -68,19 +68,13 @@ def testing_pss(test_file:TextIO, common_words_file:TextIO ,kss: Dict[str, List[
 
     review_scores = []
     absolute_errors = []
-    neutral_words = []
     kss_non_neutral = {}
     test_reviews = test_file.readlines()
     
-    for word in common_words_file:
-        if word_kss(word, kss) != None:
-            judged_word = judge(word_kss(word, kss))
-            if judge_word == 'neutral':
-                neutral_words.append(word)
-    
-    for item in kss:
-        if item not in neutral_words:
-            kss_non_neutral[item] = kss[item]
+    for key in kss:
+        if word_kss(key, kss) != None:
+            judged_word = judge(word_kss(key, kss))
+            kss_non_neutral[key] = kss[key]
         
     for review in test_reviews:
         statement = review[1:].strip()
@@ -114,8 +108,7 @@ def execute_test(dataset, name_datasets):
     with open(file_names['training'], 'r') as training_file:
             kss = extract_kss(training_file)  
     with open(file_names['test'], 'r') as test:
-        with open("most_common_english_words.txt") as common_words_file:
-            testing_result = testing_pss(test, common_words_file, kss, name_datasets)
+            testing_result = testing_pss(test, kss, name_datasets)
     
 
 if __name__ == "__main__":
@@ -140,8 +133,7 @@ if __name__ == "__main__":
 
     # Testing the results with the test dataset created
     with open(file_names['test'], 'r') as test:
-        with open("most_common_english_words.txt") as common_words_file:
-            testing_result = testing_pss(test, common_words_file, kss, name_datasets)
+        testing_result = testing_pss(test, kss, name_datasets)
     
 
     
