@@ -22,7 +22,6 @@ def partition_dataset(file:TextIO, file_name:str, test_size:float) -> Dict:
     requested in test_size, and the trainin_dataset has the remaining size.
     Print a message e.g., "The files: test_data.txt and training_data.txt were created",
     and return a dictionary e.g., {'test': 'test_data.txt', 'training': 'training_data.txt'}
-
     >>> file_names = partition_dataset(open('full.txt', 'r'), 'data', 0.2)
     The files: test_data.txt and training_data.txt were created
     >>> file_names
@@ -59,7 +58,7 @@ def partition_dataset(file:TextIO, file_name:str, test_size:float) -> Dict:
     return {'test':test_file_name, 'training':training_file_name}
  
 
-def testing_pss(test_file:TextIO, kss: Dict[str, List[int]], name_datasets ) -> Dict:
+def testing_pss(test_file:TextIO, kss: Dict[str, List[int]], name_datasets) -> Dict:
     """Create a csv dataset with the comparison of the scores given by the kss model and the original ones. Print the message "The file: reviews_comparison.csv was created" and return the dictionary {'file':'reviews_comparison.csv'}
     >>> testing_result = testing_pss(open('full.txt', 'r'), kss)
     The file: reviews_comparison.csv was created
@@ -74,6 +73,7 @@ def testing_pss(test_file:TextIO, kss: Dict[str, List[int]], name_datasets ) -> 
         statement = review[1:].strip()
         predicted_rating = statement_pss(review, kss)
         original_rating = float(review[0])
+
 
         if predicted_rating != None:
             is_close_val = math.isclose(predicted_rating, original_rating, abs_tol=0.05)
@@ -105,26 +105,33 @@ def execute_test(dataset, name_datasets):
     
 
 if __name__ == "__main__":
-    execute_test("small.txt", "small")
-    execute_test("medium.txt", "medium")
-    execute_test("full.txt", "full")
+
     # Pick a dataset  
     # dataset = 'tiny.txt'
     # dataset = 'small.txt'
     #dataset = 'medium.txt'
-    # dataset = 'full.txt'
+    dataset = 'full.txt'
 
     # Test if the training and test datasets were created
-    # name_datasets = 'data'
-    #with open(dataset, 'r') as file:
-        #file_names = partition_dataset(file, name_datasets, 0.2)
+    name_datasets = 'data'
+    with open(dataset, 'r') as file:
+        file_names = partition_dataset(file, name_datasets, 0.2)
 
-    # Training the model with the training dataset created
-    #with open(file_names['training'], 'r') as training_file:
-           # kss = extract_kss(training_file)  
+ 
+
+   # Training the model with the training dataset created
+    with open(file_names['training'], 'r') as training_file:
+            kss = extract_kss(training_file)  
+
 
     # Testing the results with the test dataset created
-    # with open(file_names['test'], 'r') as test:
+    with open(file_names['test'], 'r') as test:
+            testing_result = testing_pss(test, kss, name_datasets)
+
+    
+    execute_test("small.txt", "small")
+    execute_test("medium.txt", "medium")
+    execute_test("full.txt", "full")
 
     # Use test mode
 
