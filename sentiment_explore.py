@@ -9,7 +9,7 @@ import math
 #
 #
 #
-#
+# 
 #
 #
 #
@@ -22,6 +22,7 @@ def partition_dataset(file:TextIO, file_name:str, test_size:float) -> Dict:
     requested in test_size, and the trainin_dataset has the remaining size.
     Print a message e.g., "The files: test_data.txt and training_data.txt were created",
     and return a dictionary e.g., {'test': 'test_data.txt', 'training': 'training_data.txt'}
+    
     >>> file_names = partition_dataset(open('full.txt', 'r'), 'data', 0.2)
     The files: test_data.txt and training_data.txt were created
     >>> file_names
@@ -60,6 +61,7 @@ def partition_dataset(file:TextIO, file_name:str, test_size:float) -> Dict:
 
 def testing_pss(test_file:TextIO, common_words_file:TextIO ,kss: Dict[str, List[int]], name_datasets) -> Dict:
     """Create a csv dataset with the comparison of the scores given by the kss model and the original ones. Print the message "The file: reviews_comparison.csv was created" and return the dictionary {'file':'reviews_comparison.csv'}
+    
     >>> testing_result = testing_pss(open('full.txt', 'r'), kss)
     The file: reviews_comparison.csv was created
     >>> testing_result
@@ -75,14 +77,14 @@ def testing_pss(test_file:TextIO, common_words_file:TextIO ,kss: Dict[str, List[
     absolute_errors_sharpened = []  
     
     ### remove all common words
-    # for word, value in kss.items():
-    #     if word not in common_words_file:
-    #         kss_sharpened[word] = value
+    for word, value in kss.items():
+        if word not in common_words_file:
+            kss_sharpened[word] = value
     
     ### Remove all words that appears 20 times more
-    for word, value in kss.items():
-        if not value[1] > 20:
-            kss_sharpened[word] = value
+    #for word, value in kss.items():
+    #    if not value[1] > 20:
+    #        kss_sharpened[word] = value
     
     ### Remove all neutral words in common words list
     # neutral_words = []
@@ -119,30 +121,38 @@ def testing_pss(test_file:TextIO, common_words_file:TextIO ,kss: Dict[str, List[
         statement = review[1:].strip()
         original_rating = float(review[0])
         
-        # original predicted rating
+        #Calculate predicted rating
         predicted_rating = statement_pss(review, kss)
         if predicted_rating != None:
+            sentiment = judge(predicted_rating)
             is_close_val = math.isclose(predicted_rating, original_rating, abs_tol=0.05)
             absolute_error = round((abs(float(predicted_rating) - original_rating)), 2)
             absolute_errors.append(absolute_error)
             mean_absolute_error = round(sum(absolute_errors)/len(absolute_errors), 5)
-            review_scores.append([statement, round(predicted_rating, 2), round(predicted_rating), original_rating, absolute_error, is_close_val])
+            
         
-        # sharpened predicted rating
+        #Sharp  and calculate predicted rating
         predicted_rating_sharpened = statement_pss(review, kss_sharpened)
         if predicted_rating_sharpened != None:
+            is_close_val_sharpened = math.isclose(predicted_rating_sharpened, original_rating, abs_tol=0.05)
             absolute_error_sharpened = round((abs(float(predicted_rating_sharpened) - original_rating)), 2)
             absolute_errors_sharpened.append(absolute_error_sharpened)
             mean_absolute_error_sharpened = round(sum(absolute_errors_sharpened)/len(absolute_errors_sharpened), 5)
+        
+        #Append predicted and sharpened values in the same list 
+        if predicted_rating != None and predicted_rating_sharpened != None:
+            review_scores.append([statement, original_rating, round(predicted_rating, 2), round(predicted_rating), absolute_error,is_close_val, round(predicted_rating_sharpened, 2), round(predicted_rating_sharpened), absolute_error_sharpened, is_close_val_sharpened])
+        
     if predicted_rating_sharpened != None:
         print(name_datasets + " org rate: \t", mean_absolute_error)
         print(name_datasets + " new rate: \t", mean_absolute_error_sharpened)
-       
+    
     with open('reviews_'+ name_datasets + '.csv', mode ='w') as comparison_file:
         comparison_writer = csv.writer(comparison_file, delimiter=",", quotechar='"', quoting = csv.QUOTE_MINIMAL)
         comparison_writer.writerow(["Mean Absolute Error(MAE): " + str(mean_absolute_error) ])
+        comparison_writer.writerow(["Mean Absolute Error(MAE): " + str(mean_absolute_error_sharpened) ])
         comparison_writer.writerow(["-","-","-","-","-"])
-        comparison_writer.writerow(["Review", "PSS Score", "Predicted Rating", "Original Rating", "Absolute Error", "Evaluation Result"])
+        comparison_writer.writerow(["Review", "Original Rating", "PSS Score", "Predicted Rating", "Absolute Error", "Evaluation Result", "PSS Score Sharpened", "Predicted Rating Sharpened","Absolute Error Sharpened", "Evaluation Result Sharpened"])
         for row in review_scores:
             comparison_writer.writerow(row)
 
@@ -160,39 +170,43 @@ def execute_test(datasets: Dict[str, str], partition_size):
                 testing_result = testing_pss(test, common_words_file, kss, name)
     
 
-datasets =  {
-    "small"     : "small.txt",
-    "medium"    : "medium.txt",
-    "full"      : "full.txt"
-}
+
 if __name__ == "__main__":
-    execute_test(datasets, 0.2)
+    
+    #Create a dictionary containing diferent datasets, in order to compare accuracies among each other.
+    datasets =  {
+        "small"     : "small.txt",
+        "medium"    : "medium.txt",
+        "full"      : "full.txt"
+    }        
+    
+    
+    execute_test(datasets, 0.1)
 
-#     # Pick a dataset  
-#     # dataset = 'tiny.txt'
-#     # dataset = 'small.txt'
-#     #dataset = 'medium.txt'
-#     dataset = 'full.txt'
+    # Pick a dataset  
+    # dataset = 'tiny.txt'
+    # dataset = 'small.txt'
+    #dataset = 'medium.txt'
+    dataset = 'full.txt'
 
-#     # Test if the training and test datasets were created
-#     name_datasets = 'data'
-#     with open(dataset, 'r') as file:
-#         file_names = partition_dataset(file, name_datasets, 0.2)
+     # Test if the training and test datasets were created
+    #name_datasets = 'data'
+     
+    #with open(dataset, 'r') as file:
+        #file_names = partition_dataset(file, name_datasets, 0.2)
 
  
 
-#    # Training the model with the training dataset created
-#     with open(file_names['training'], 'r') as training_file:
-#             kss = extract_kss(training_file)  
+    ## Training the model with the training dataset created
+    #with open(file_names['training'], 'r') as training_file:
+        #kss = extract_kss(training_file)  
 
 
-#     # Testing the results with the test dataset created
-#     with open(file_names['test'], 'r') as test:
-#         with open("most_common_english_words.txt") as common_words_file:
-#             testing_result = testing_pss(test, common_words_file, kss, name_datasets)
-    
-
-
+    ## Testing the results with the test dataset created
+    #with open(file_names['test'], 'r') as test:
+        #with open("most_common_english_words.txt") as common_words_file:
+            #testing_result = testing_pss(test, common_words_file, kss, name_datasets)
+   
     # Use test mode
 
     #doctest.testmod()
