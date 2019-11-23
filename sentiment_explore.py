@@ -68,8 +68,11 @@ def testing_pss(test_file:TextIO, common_words_file:TextIO ,kss: Dict[str, List[
     common_words_file = common_words_file.read().splitlines()
     review_scores = []
     absolute_errors = []
-    kss_sharpened = {}
     test_reviews = test_file.readlines()
+    
+    #sharpened variables
+    kss_sharpened = {}
+    absolute_errors_sharpened = []  
     
     ### remove all common words
     # for word, value in kss.items():
@@ -77,9 +80,9 @@ def testing_pss(test_file:TextIO, common_words_file:TextIO ,kss: Dict[str, List[
     #         kss_sharpened[word] = value
     
     ### Remove all words that appears 20 times more
-    # for word, value in kss.items():
-    #     if not value[1] > 20:
-    #         kss_sharpened[word] = value
+    for word, value in kss.items():
+        if not value[1] > 20:
+            kss_sharpened[word] = value
     
     ### Remove all neutral words in common words list
     # neutral_words = []
@@ -92,12 +95,12 @@ def testing_pss(test_file:TextIO, common_words_file:TextIO ,kss: Dict[str, List[
     #         kss_sharpened[word] = value
     
     ### Add more weights to not neutral words
-    for word, values in kss.items():
-        if word_kss(word, kss) != None:
-            kss_sharpened[word] = values
-    for word, value in kss_sharpened.items():
-        if judge(word_kss(word, kss))!="neutral":
-            kss_sharpened[word] = [(value[0]*1.2),value[1]]
+    # for word, values in kss.items():
+    #     if word_kss(word, kss) != None:
+    #         kss_sharpened[word] = values
+    # for word, value in kss_sharpened.items():
+    #     if judge(word_kss(word, kss))!="neutral":
+    #         kss_sharpened[word] = [(value[0]*1.2),value[1]]
     
     ### Add more weights to not neutral words without neutral words
     # not_neutral_words = []
@@ -109,38 +112,32 @@ def testing_pss(test_file:TextIO, common_words_file:TextIO ,kss: Dict[str, List[
     #     if word not in not_neutral_words:
     #         kss_sharpened[word] = [value[0]*1.5,value[1]]
             
+    ### Portion of occurences in all occurences
     
-    
-    
-                
+              
     for review in test_reviews:
         statement = review[1:].strip()
-        predicted_rating = statement_pss(review, kss)
-        predicted_rating_sharpened = statement_pss(review, kss_sharpened)
         original_rating = float(review[0])
-
-
+        
+        # original predicted rating
+        predicted_rating = statement_pss(review, kss)
         if predicted_rating != None:
-            
             is_close_val = math.isclose(predicted_rating, original_rating, abs_tol=0.05)
             absolute_error = round((abs(float(predicted_rating) - original_rating)), 2)
             absolute_errors.append(absolute_error)
             mean_absolute_error = round(sum(absolute_errors)/len(absolute_errors), 5)
             review_scores.append([statement, round(predicted_rating, 2), round(predicted_rating), original_rating, absolute_error, is_close_val])
-    
-    absolute_errors_sharpened = []
-    for review in test_reviews:
+        
+        # sharpened predicted rating
         predicted_rating_sharpened = statement_pss(review, kss_sharpened)
-        original_rating = float(review[0])
         if predicted_rating_sharpened != None:
             absolute_error_sharpened = round((abs(float(predicted_rating_sharpened) - original_rating)), 2)
             absolute_errors_sharpened.append(absolute_error_sharpened)
             mean_absolute_error_sharpened = round(sum(absolute_errors_sharpened)/len(absolute_errors_sharpened), 5)
-            
     if predicted_rating_sharpened != None:
         print(name_datasets + " org rate: \t", mean_absolute_error)
         print(name_datasets + " new rate: \t", mean_absolute_error_sharpened)
-        
+       
     with open('reviews_'+ name_datasets + '.csv', mode ='w') as comparison_file:
         comparison_writer = csv.writer(comparison_file, delimiter=",", quotechar='"', quoting = csv.QUOTE_MINIMAL)
         comparison_writer.writerow(["Mean Absolute Error(MAE): " + str(mean_absolute_error) ])
@@ -152,17 +149,24 @@ def testing_pss(test_file:TextIO, common_words_file:TextIO ,kss: Dict[str, List[
     print('The file:' + 'reviews_'+ name_datasets + '.csv' + ' was created')
     return {'Mean Absolute Error(MAE): ', mean_absolute_error}
 
-def execute_test(dataset, name_datasets):
-    with open(dataset, 'r') as file:
-        file_names = partition_dataset(file, name_datasets, 0.2)
-    with open(file_names['training'], 'r') as training_file:
-            kss = extract_kss(training_file)  
-    with open(file_names['test'], 'r') as test:
-        with open("most_common_english_words.txt") as common_words_file:
-            testing_result = testing_pss(test, common_words_file, kss, name_datasets)
+def execute_test(datasets: Dict[str, str], partition_size):
+    for name in datasets:
+        with open(datasets[name], 'r') as file:
+            file_names = partition_dataset(file, name, partition_size)
+        with open(file_names['training'], 'r') as training_file:
+                kss = extract_kss(training_file)  
+        with open(file_names['test'], 'r') as test:
+            with open("most_common_english_words.txt") as common_words_file:
+                testing_result = testing_pss(test, common_words_file, kss, name)
     
 
+datasets =  {
+    "small"     : "small.txt",
+    "medium"    : "medium.txt",
+    "full"      : "full.txt"
+}
 if __name__ == "__main__":
+    execute_test(datasets, 0.2)
 
 #     # Pick a dataset  
 #     # dataset = 'tiny.txt'
@@ -188,10 +192,6 @@ if __name__ == "__main__":
 #             testing_result = testing_pss(test, common_words_file, kss, name_datasets)
     
 
-    
-    execute_test("small.txt", "small")
-    execute_test("medium.txt", "medium")
-    execute_test("full.txt", "full")
 
     # Use test mode
 
