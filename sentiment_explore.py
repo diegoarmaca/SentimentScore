@@ -8,7 +8,7 @@ import math
 
 #
 #
-#  The file Sentiment_Explore.ipynb complements this code, adding graphs among others by using  
+#  The file explore.ipynb complements this code, adding graphs among others by using  
 #  new libraries such as mathplotlib and pandas
 #
 #
