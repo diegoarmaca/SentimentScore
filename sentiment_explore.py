@@ -54,7 +54,7 @@ def partition_dataset(file:TextIO, file_name:str, test_size:float) -> Dict:
     print('The files: '+ test_file_name + ' and ' + training_file_name + ' were created')
     return {'test':test_file_name, 'training':training_file_name}
  
-def remove_common_words(common_words_file:TextIO ,kss: Dict[str, List[int]])->Dict:
+def sharpen_model(common_words_file:TextIO ,kss: Dict[str, List[int]])->Dict:
     common_words_file = common_words_file.read().splitlines()
     kss_sharpened = {}
     for word, value in kss.items():
@@ -86,6 +86,7 @@ def compare_pss_models(test_file:TextIO, common_words_file:TextIO ,kss: Dict[str
     {'Mean_Absolute_Error(MAE)': 1.00225, 'Mean_Absolute_Error(MAE)_Sharpened': 0.96186}
     >>> file1 = open('full.txt', 'r')
     >>> file2 = open('most_common_english_words.txt', 'r')
+    >>> kss = extract_kss(file1)
     >>> testing_result = compare_pss_models(file1, file2, kss, 'data')
     The file: reviews_data.csv was created
     >>> file1.close()
@@ -99,7 +100,7 @@ def compare_pss_models(test_file:TextIO, common_words_file:TextIO ,kss: Dict[str
     test_reviews = test_file.readlines()
     
     ### Sharpend kss by removing all common words
-    kss_sharpened = remove_common_words(common_words_file ,kss)
+    kss_sharpened = sharpen_model(common_words_file ,kss)
    
     # Iterate over each review in order to get predicted rating and MAE for kss and the sharpened version of kss          
     for review in test_reviews:
@@ -153,6 +154,7 @@ if __name__ == "__main__":
         "medium"    : "medium.txt",
         "full"      : "full.txt"
     }        
+    
     most_common_words = "most_common_english_words.txt"
     
     #Test for the function execute_test 
