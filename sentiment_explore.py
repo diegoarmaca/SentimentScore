@@ -107,12 +107,11 @@ def report_errors(review: str, kss: Dict[str, List[int]])->List:
 
 def report_mean_error(absolute_errors:List[float]):
     """ Return the mean abosolute error of a given list of error values.
-    >>> [1.56, 0.24, 0.69]
+    >>> report_mean_error([1.56, 0.24, 0.69])
     0.83
     """
     if len(absolute_errors) != 0:
         mean_absolute_error = round(sum(absolute_errors)/len(absolute_errors), 5)
-
         return mean_absolute_error
     
 def compare_pss_models(test_file:TextIO, common_words_file:TextIO ,kss: Dict[str, List[int]], name_datasets) -> Dict:
