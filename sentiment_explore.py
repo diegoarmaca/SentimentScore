@@ -161,7 +161,7 @@ def compare_pss_models(test_file:TextIO, common_words_file:TextIO ,kss: Dict[str
         comparison_writer.writerow([("Mean Absolute Error(MAE): " + str(mean_absolute_error)), 
                                     ("Mean Absolute Error(MAE)   Sharpened: " + str(mean_absolute_error_sharpened))])
         comparison_writer.writerow(["-","-","-","-","-"])
-        comparison_writer.writerow(["Review", "Original Rating", 
+        comparison_writer.writerow(["Review", "Actual Rating", 
                                     "PSS Score", "Predicted Rating", "Absolute Error", "Evaluation Result", 
                                     "PSS Score Sharpened", "Predicted Rating Sharpened","Absolute Error Sharpened", "Evaluation Result Sharpened"])
         for row in scores_comparison:
