@@ -55,6 +55,9 @@ def partition_dataset(file:TextIO, file_name:str, test_size:float) -> Dict:
     return {'test':test_file_name, 'training':training_file_name}
  
 def sharpen_model(common_words_file:TextIO ,kss: Dict[str, List[int]])->Dict:
+    """Sharpen the prediction model by removing neutral words and common words from kss dictionary. 
+    Return kss_sharpened as the sharpened kss dictionary.
+    """
     common_words_file = common_words_file.read().splitlines()
     kss_sharpened = {}
     for word, value in kss.items():
@@ -62,19 +65,51 @@ def sharpen_model(common_words_file:TextIO ,kss: Dict[str, List[int]])->Dict:
             kss_sharpened[word] = value
     return kss_sharpened    
 
+def predict_movie_rating(pss_score: float)->int:
+    """ Get the Predicted Sentiment Score and use it to predict the movie rating from a review statement. 
+    >>> predict_movie_rating(2.8)
+    3
+    >>> predict_movie_rating(1.2)
+    1
+    """
+    return int(round(pss_score))
+
+def is_close_eval(pss_score, actual_rating)-> bool:
+    """ Get the difference between the actual movie rating and the Predicted Sentiment Score and determine
+    if the difference is larger than 0.05. If the difference is larger than 0.05, return False. 
+    If the difference is smaller than or equals to 0.05, return True.
+    >>> is_close_eval(2.05, 2)
+    True
+    >>> is_close_eval(2.02, 2)
+    True
+    >>> is_close_eval(3.05, 2)
+    False
+    """
+    return math.isclose(pss_score, actual_rating, abs_tol=0.05)
+
 def report_errors(review: str, kss: Dict[str, List[int]])->List:
-    original_rating = float(review[0])
+    """ Return a list of scores for each review in the follow order: 
+    1. the Predicted Sentiment Score, 
+    2. the predicted movie rating, 
+    3. the absolute difference between PSS and the actual rating, 
+    4. a boolean value returned by is_close_eval()
+    """
+    actual_rating = float(review[0])
     absolute_errors = []
     pss_score = statement_pss(review, kss)
     review_scores = []
     if pss_score != None:
-        is_close_val = math.isclose(pss_score, original_rating, abs_tol=0.05)
-        absolute_error = round((abs(float(pss_score) - original_rating)), 2)
+        is_close_val = is_close_eval(pss_score, actual_rating)
+        absolute_error = round((abs(float(pss_score) - actual_rating)), 2)
         absolute_errors.append(absolute_error)
-        review_scores = [pss_score, round(pss_score), absolute_error, is_close_val]
+        review_scores = [pss_score, predict_movie_rating(pss_score), absolute_error, is_close_val]
         return review_scores
 
 def report_mean_error(absolute_errors:List[float]):
+    """ Return the mean abosolute error of a given list of error values.
+    >>> [1.56, 0.24, 0.69]
+    0.83
+    """
     if len(absolute_errors) != 0:
         mean_absolute_error = round(sum(absolute_errors)/len(absolute_errors), 5)
         return mean_absolute_error
