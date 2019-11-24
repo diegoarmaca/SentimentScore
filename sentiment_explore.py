@@ -82,15 +82,13 @@ def testing_pss(test_file:TextIO, common_words_file:TextIO ,kss: Dict[str, List[
     #sharpened variables
     kss_sharpened = {}
     absolute_errors_sharpened = []
-    sum_of_frequencies = 0
     
-    ### remove all common words
+    ###Remove all words judged as 'neutral' or common words
     for word, value in kss.items():
-        if word not in common_words_file:
-            kss_sharpened[word] = value
-            sum_of_frequencies += value[1]
-    
-       
+        if (judge(value[0]/value[1]) != 'neutral') or (word not in common_words_file):
+            kss_sharpened[word] = value   
+     
+      
     #Iterate over each review in order to get predicted rating and MAE for kss and the sharpened version of kss          
     for review in test_reviews:
         statement = review[1:].strip()
@@ -157,8 +155,8 @@ if __name__ == "__main__":
         "full"      : "full.txt"
     }        
     
-    #most_common_words = "most_common_english_words.txt"
-    most_common_words = "stoplist.txt"
+    most_common_words = "most_common_english_words.txt"
+    #most_common_words = "stoplist.txt"
     
     #Test for the function execute_test 
     execute_test(datasets, 0.1)
